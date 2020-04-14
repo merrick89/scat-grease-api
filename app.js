@@ -19,10 +19,12 @@ app.use(cookieParser());
 
 const index = require("./routes/index");
 const create = require("./routes/scatGrease/create");
+const join = require("./routes/scatGrease/join");
 const startGame = require("./routes/scatGrease/startGame");
 
 app.use(index);
 app.use('/scatGrease/create', create);
+app.use('/scatGrease/join', join);
 app.use('/scatGrease/startGame', startGame);
 
 const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
@@ -45,17 +47,17 @@ client.connect().then((client)=>{
         io.setMaxListeners(0);
 
         // Get the roomCode from the client (React)
-        socket.on("clientConnected", (roomCode) => {       
+        socket.on("clientConnected", (roomCode) => {
 
             console.log("Room Joined:", roomCode);
 
-            socket.join(`${roomCode}`);
+            socket.join(roomCode);
 
             if (interval) {
                 clearInterval(interval);
             }
         
-            interval = setInterval(() => getApiAndEmit(socket, roomCode), 5000);
+            interval = setInterval(() => getApiAndEmit(io, roomCode), 2000);
 
         })    
 
@@ -67,7 +69,7 @@ client.connect().then((client)=>{
         });    
     });
 
-    const getApiAndEmit = async (socket, roomCode) => {       
+    const getApiAndEmit = async (io, roomCode) => {       
         // Query the DB to get information on the room.
        
         const collection = client.db("scatGrease").collection("rooms");        
@@ -75,26 +77,27 @@ client.connect().then((client)=>{
         const record = await collection.find({roomCode: roomCode}).sort({db_date: -1}).limit(1).toArray();
         const game = record[0];
 
-        console.log(game)
+        //console.log(game)
 
         try {
             var res;
             if (game){
                 res = {
                     success: true,
+                    roomId: game._id,
                     roomCode: game.roomCode,
                     playerList: game.playerList,
-                    letter: '',
-                    questions: [],
-                    timeStarted: ''
+                    letter: game.letter,
+                    questions: game.questions,
+                    timeStarted: game.last_start_date
                 }; 
             } else {
                 res = {
                     success: false
                 }
-            }            
+            }
     
-            socket.emit("FromAPI", res); // Emitting a new message. It will be consumed by the client        
+            io.to(roomCode).emit("FromAPI", res); // Emitting a new message. It will be consumed by the client        
     
         } catch (error) {
             console.error(`Error: ${error}`);

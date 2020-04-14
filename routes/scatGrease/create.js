@@ -26,7 +26,9 @@ router.post("/", async (req, res) => {
                     playerList: [{
                                     name: playerOne,
                                     score: 0
-                                }]
+                                }],
+                    last_start_date: '',
+                    questions: []
                 }
         
         // Insert the room record
