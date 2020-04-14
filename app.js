@@ -26,78 +26,86 @@ app.use('/scatGrease/create', create);
 app.use('/scatGrease/startGame', startGame);
 
 const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true });
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-const server = http.createServer(app);
-const io = socketIo(server); // < Interesting!
+// Establish the connection for the entire app
+client.connect().then((client)=>{
+    app.locals.client = client;
 
-let interval;
+    const server = http.createServer(app);
+    const io = socketIo(server); // < Interesting!
 
-io.on("connection", socket => {     
+    let interval;
+
+    io.on("connection", socket => {     
+        
+        console.log("New client connected");
+
+        // Fix max listeners warning in console
+        io.setMaxListeners(0);
+
+        // Get the roomCode from the client (React)
+        socket.on("clientConnected", (roomCode) => {       
+
+            console.log("Room Joined:", roomCode);
+
+            socket.join(`${roomCode}`);
+
+            if (interval) {
+                clearInterval(interval);
+            }
+        
+            interval = setInterval(() => getApiAndEmit(socket, roomCode), 5000);
+
+        })    
+
+        socket.on("disconnect", () => {
+            console.log("Client disconnected");
+            if (interval) {
+                clearInterval(interval);
+            }
+        });    
+    });
+
+    const getApiAndEmit = async (socket, roomCode) => {       
+        // Query the DB to get information on the room.
+       
+        const collection = client.db("scatGrease").collection("rooms");        
     
-    console.log("New client connected");
+        const record = await collection.find({roomCode: roomCode}).sort({db_date: -1}).limit(1).toArray();
+        const game = record[0];
 
-    // Fix max listeners warning in console
-    io.setMaxListeners(0);
+        console.log(game)
 
-    // Get the roomCode from the client (React)
-    socket.on("clientConnected", (roomCode) => {       
-
-        console.log("Room Joined:", roomCode);
-
-        socket.join(`${roomCode}`);
-
-        if (interval) {
-            clearInterval(interval);
-        }
+        try {
+            var res;
+            if (game){
+                res = {
+                    success: true,
+                    roomCode: game.roomCode,
+                    playerList: game.playerList,
+                    letter: '',
+                    questions: [],
+                    timeStarted: ''
+                }; 
+            } else {
+                res = {
+                    success: false
+                }
+            }            
     
-        interval = setInterval(() => getApiAndEmit(socket, roomCode), 1000);
-
-    })    
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnected");
-        if (interval) {
-            clearInterval(interval);
-        }
-    });    
-});
-
-const getApiAndEmit = async (socket, roomCode) => {       
-    // Query the DB to get information on the room.
+            socket.emit("FromAPI", res); // Emitting a new message. It will be consumed by the client        
     
-    
-    try {
-        const res = {
-            roomCode: roomCode,
-            playerList: [
-                {name: "Merrick", score:0},
-                {name: "Ymilie", score:0},
-                {name: "Beshan", score:0},
-                {name: "Aneesha", score:0}
-            ],
-            letter: 'M',
-            questions: [
-                {id: 1,
-                text: "Places to hide a body."},
-                {id: 2,
-                text: "Things you can put inside yourself."},
-                {id: 3,
-                text: "Something wet."},
-                {id: 4,
-                text: "A shitty murder weapon."},
-                {id: 5,
-                text: "Ways to convince a bouncer to let you in."}
-            ],
-            timeStarted: moment().format()
-        };
+        } catch (error) {
+            console.error(`Error: ${error}`);
+        }          
+      
+        
+    };
 
-        socket.emit("FromAPI", res); // Emitting a new message. It will be consumed by the client        
+    const port = process.env.PORT || 4001;
+    server.listen(port, () => console.log(`Listening on port ${port}`));
 
-    } catch (error) {
-        console.error(`Error: ${error}`);
-    }
-};
-
-const port = process.env.PORT || 4001;
-server.listen(port, () => console.log(`Listening on port ${port}`));
+}).catch((err) => {
+    console.log("Could not connect:", err)
+})

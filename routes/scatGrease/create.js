@@ -1,11 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const MongoClient = require('mongodb').MongoClient;
-const config = require("../../config/config");
 const crypto = require("crypto");
-
-const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 router.get("/", (req, res) => {
     // Create a room here
@@ -16,8 +11,11 @@ router.post("/", async (req, res) => {
     
     const playerOne = !req.body.nickName ? '' : req.body.nickName;
 
-    // Connect to DB and create a new room
-    await client.connect().then(async (client) => {
+    try {
+
+        // Get the connection from the app
+        const client = req.app.locals.client;
+
         const collection = client.db("scatGrease").collection("rooms");
 
         // Create the new room here
@@ -42,8 +40,8 @@ router.post("/", async (req, res) => {
                 roomCode: insertResponse.ops[0].roomCode
             }            
         }).status(200);
-        
-    }).catch( err => {
+
+    } catch (err) {
         console.log("error:", err);
         return res.status(500).send({
             connected: false,
@@ -52,7 +50,8 @@ router.post("/", async (req, res) => {
                 message: "Couldn't connect..."
             }
         })
-    })
+    }     
+
 
 });
 
