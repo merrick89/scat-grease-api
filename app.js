@@ -5,6 +5,7 @@ const moment = require("moment");
 const socketIo = require("socket.io");
 const MongoClient = require('mongodb').MongoClient;
 const config = require("./config/config");
+const appConfig = require("./config/appConfig");
 const cors = require("cors");
 
 const app = express();
@@ -21,11 +22,13 @@ const index = require("./routes/index");
 const create = require("./routes/scatGrease/create");
 const join = require("./routes/scatGrease/join");
 const startGame = require("./routes/scatGrease/startGame");
+const answer = require("./routes/scatGrease/answer");
 
 app.use(index);
 app.use('/scatGrease/create', create);
 app.use('/scatGrease/join', join);
 app.use('/scatGrease/startGame', startGame);
+app.use('/scatGrease/answer', answer);
 
 const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -57,31 +60,44 @@ client.connect().then((client)=>{
                 clearInterval(interval);
             }
         
-            interval = setInterval(() => getApiAndEmit(io, roomCode), 2000);
+            interval = setInterval(() => getApiAndEmit(io, roomCode), appConfig.scatGrease.socketEmitFrequency);
 
         })    
 
         socket.on("disconnect", () => {
             console.log("Client disconnected");
-            if (interval) {
-                clearInterval(interval);
-            }
         });    
     });
 
     const getApiAndEmit = async (io, roomCode) => {       
-        // Query the DB to get information on the room.
-       
-        const collection = client.db("scatGrease").collection("rooms");        
+        // Query the DB to get information on the room.        
+
+        const rooms = client.db("scatGrease").collection("rooms");        
     
-        const record = await collection.find({roomCode: roomCode}).sort({db_date: -1}).limit(1).toArray();
-        const game = record[0];
+        const room = await rooms.find({roomCode: roomCode}).sort({db_date: -1}).limit(1).toArray();
+        const game = room[0];
 
         //console.log(game)
 
         try {
             var res;
             if (game){
+
+                //  Check if the game is started. If it is, check when the start date was... If it was over 3 minutes ago,
+                //  set the status of the game to "end". This will happen every time the setInterval happens.
+                //  We add an extra 3 seconds to let the data get through...
+
+                if (game.status === 'playing' && moment().diff(game.last_start_date, 'seconds') > appConfig.scatGrease.secondsPerRound){
+                    console.log("Ending the game!");
+                    rooms.findOneAndUpdate(     {roomCode: roomCode},
+                                                {  $set: {
+                                                        status: 'end'
+                                                    }
+                                                },
+                                                { sort: { db_date: -1 } }
+                                            )
+                }
+
                 res = {
                     success: true,
                     roomId: game._id,
@@ -89,7 +105,8 @@ client.connect().then((client)=>{
                     playerList: game.playerList,
                     letter: game.letter,
                     questions: game.questions,
-                    timeStarted: game.last_start_date
+                    timeStarted: game.last_start_date,
+                    status: game.status
                 }; 
             } else {
                 res = {

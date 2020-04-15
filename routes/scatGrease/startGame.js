@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const moment = require("moment");
 
 router.get("/", (req, res) => {
     // Create a room here
@@ -33,8 +34,9 @@ router.post("/", async (req, res) => {
         rooms.findOneAndUpdate(     {roomCode: roomCode},
                                     {  $set: {
                                             letter: letter,
-                                            last_start_date: new Date(),
-                                            questions: questions
+                                            last_start_date: moment().format(),
+                                            questions: questions,
+                                            status: 'playing'
                                         }
                                     },
                                     { sort: { db_date: -1 } }

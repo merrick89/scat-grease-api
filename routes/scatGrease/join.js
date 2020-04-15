@@ -9,6 +9,8 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res) => {
     
+    // This is the API endpoint to add a player to a room. The data for the room itself is generated from app.js, using socket.io
+    
     const playerName = !req.body.nickName ? '' : req.body.nickName;
     const roomCode = !req.body.roomCode ? '' : req.body.roomCode;
 
@@ -26,7 +28,7 @@ router.post("/", async (req, res) => {
             // This player does not exist in the room, let's add him in
             rooms.findOneAndUpdate(     {roomCode: roomCode},
                 {  $push: {
-                        playerList: {name: playerName, score: 0}
+                        playerList: {name: playerName, score: 0, answers: {}}
                     }
                 },
                 { sort: { db_date: -1 } }

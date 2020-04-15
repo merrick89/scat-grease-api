@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
+const moment = require("moment");
 
 router.get("/", (req, res) => {
     // Create a room here
@@ -22,13 +23,15 @@ router.post("/", async (req, res) => {
         /* A room requires a 5 character roomcode, last_start_date, db_date */
         var roomCode = crypto.randomBytes(20).toString('hex').substr(1,5);
         var obj = { roomCode: roomCode,
-                    db_date: new Date(),
+                    db_date: moment().format(),
                     playerList: [{
                                     name: playerOne,
-                                    score: 0
+                                    score: 0,
+                                    answers: {}
                                 }],
                     last_start_date: '',
-                    questions: []
+                    questions: [],                    
+                    status: 'new'
                 }
         
         // Insert the room record
