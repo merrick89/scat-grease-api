@@ -40,10 +40,8 @@ client.connect().then((client)=>{
     const server = http.createServer(app);
     const io = socketIo(server); // < Interesting!
 
-    let interval;
+    io.on("connection", socket => {        
 
-    io.on("connection", socket => {     
-        
         console.log("New client connected");
 
         // Fix max listeners warning in console
@@ -55,6 +53,8 @@ client.connect().then((client)=>{
             console.log("Room Joined:", roomCode);
 
             socket.join(roomCode);
+
+            let interval;
 
             if (interval) {
                 clearInterval(interval);
