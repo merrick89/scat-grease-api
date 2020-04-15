@@ -4,9 +4,8 @@ const http = require("http");
 const moment = require("moment");
 const socketIo = require("socket.io");
 const MongoClient = require('mongodb').MongoClient;
-const config = require("./config/config");
-const appConfig = require("./config/appConfig");
 const cors = require("cors");
+const aws = require('aws-sdk');
 
 const app = express();
 
@@ -32,12 +31,19 @@ app.use('/scatGrease/startGame', startGame);
 app.use('/scatGrease/answer', answer);
 app.use('/scatGrease/score', score);
 
-const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
+let s3 = new aws.s3({
+    user: process.env.user,
+    password: process.env.password,
+    socketEmitFrequency: process.env.socketEmitFrequency,
+    secondsPerRound: process.env.secondsPerRound
+})
+
+const uri = `mongodb+srv://${s3.user}:${s3.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Establish the connection for the entire app
 client.connect().then((client)=>{
-    app.locals.client = client;
+    app.locals.client = client;    
 
     const server = http.createServer(app);
     const io = socketIo(server); // < Interesting!
@@ -60,9 +66,9 @@ client.connect().then((client)=>{
 
             if (interval) {
                 clearInterval(interval);
-            }
-        
-            interval = setInterval(() => getApiAndEmit(io, roomCode), appConfig.scatGrease.socketEmitFrequency);
+            }            
+
+            interval = setInterval(() => getApiAndEmit(io, roomCode), s3.socketEmitFrequency);
 
         })    
 
@@ -89,7 +95,7 @@ client.connect().then((client)=>{
                 //  set the status of the game to "end". This will happen every time the setInterval happens.
                 //  We add an extra 3 seconds to let the data get through...
 
-                if (game.status === 'playing' && moment().diff(game.last_start_date, 'seconds') > appConfig.scatGrease.secondsPerRound){
+                if (game.status === 'playing' && moment().diff(game.last_start_date, 'seconds') > s3.secondsPerRound){
                     console.log("Ending the game!");
                     rooms.findOneAndUpdate(     {roomCode: roomCode},
                                                 {  $set: {
