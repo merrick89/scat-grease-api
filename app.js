@@ -23,12 +23,14 @@ const create = require("./routes/scatGrease/create");
 const join = require("./routes/scatGrease/join");
 const startGame = require("./routes/scatGrease/startGame");
 const answer = require("./routes/scatGrease/answer");
+const score = require("./routes/scatGrease/score");
 
 app.use(index);
 app.use('/scatGrease/create', create);
 app.use('/scatGrease/join', join);
 app.use('/scatGrease/startGame', startGame);
 app.use('/scatGrease/answer', answer);
+app.use('/scatGrease/score', score);
 
 const uri = `mongodb+srv://${config.user}:${config.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });

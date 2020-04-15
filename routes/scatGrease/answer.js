@@ -30,18 +30,54 @@ router.post("/", async (req, res) => {
                     {
                         $set: { 
                             "playerList.$.answers": {
-                                1: answers.answer1,
-                                2: answers.answer2,
-                                3: answers.answer3,
-                                4: answers.answer4,
-                                5: answers.answer5,
-                                6: answers.answer6,
-                                7: answers.answer7,
-                                8: answers.answer8,
-                                9: answers.answer9,
-                                10: answers.answer10,
-                                11: answers.answer11,
-                                12: answers.answer12
+                                1:  {
+                                        answer: answers.answer1,
+                                        score: 0                                    
+                                    },
+                                2:  {
+                                        answer: answers.answer2,
+                                        score: 0
+                                    },
+                                3: {
+                                        answer: answers.answer3,
+                                        score: 0
+                                    },
+                                4: {
+                                        answer: answers.answer4,
+                                        score: 0
+                                    },
+                                5: {
+                                        answer: answers.answer5,
+                                        score: 0
+                                    },
+                                6: {
+                                        answer: answers.answer6,
+                                        score: 0
+                                    },
+                                7: {
+                                        answer: answers.answer7,
+                                        score: 0
+                                    },
+                                8: {
+                                        answer: answers.answer8,
+                                        score: 0
+                                    },
+                                9: {
+                                        answer: answers.answer9,
+                                        score: 0
+                                    },
+                                10: {
+                                        answer: answers.answer10,
+                                        score: 0
+                                    },
+                                11: {
+                                        answer: answers.answer11,
+                                        score: 0
+                                    },
+                                12: {
+                                        answer: answers.answer12,
+                                        score: 0
+                                    },
                             }
                         }
                     },
