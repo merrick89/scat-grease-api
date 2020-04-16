@@ -31,11 +31,12 @@ app.use('/scatGrease/startGame', startGame);
 app.use('/scatGrease/answer', answer);
 app.use('/scatGrease/score', score);
 
-
-const user = process.env.user;
-const password = process.env.password;
-const socketEmitFrequency = process.env.socketEmitFrequency;
-const secondsPerRound = process.env.secondsPerRoun;
+let s3 = {
+    user: process.env.user,
+    password: process.env.password,
+    socketEmitFrequency: process.env.socketEmitFrequency,
+    secondsPerRound: process.env.secondsPerRound
+}
 
 const uri = `mongodb+srv://${s3.user}:${s3.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
