@@ -8,9 +8,16 @@ const cors = require("cors");
 
 const app = express();
 
+let s3 = {
+    user: process.env.user,
+    password: process.env.password,
+    socketEmitFrequency: process.env.socketEmitFrequency,
+    secondsPerRound: process.env.secondsPerRound,
+    corsOrigin: process.env.corsOrigin
+}
+
 app.use(cors({
-    origin:true,
-    credentials: true
+    origin: [process.env.corsOrigin]    
 }))
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
@@ -29,13 +36,6 @@ app.use('/scatGrease/join', join);
 app.use('/scatGrease/startGame', startGame);
 app.use('/scatGrease/answer', answer);
 app.use('/scatGrease/score', score);
-
-let s3 = {
-    user: process.env.user,
-    password: process.env.password,
-    socketEmitFrequency: process.env.socketEmitFrequency,
-    secondsPerRound: process.env.secondsPerRound
-}
 
 const uri = `mongodb+srv://${s3.user}:${s3.password}@merrick-6y73m.mongodb.net/test?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
