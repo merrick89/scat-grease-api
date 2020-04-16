@@ -5,7 +5,6 @@ const moment = require("moment");
 const socketIo = require("socket.io");
 const MongoClient = require('mongodb').MongoClient;
 const cors = require("cors");
-const aws = require('aws-sdk');
 
 const app = express();
 
