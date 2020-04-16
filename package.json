@@ -18,5 +18,9 @@
     "moment": "^2.24.0",
     "mongodb": "^3.5.5",
     "socket.io": "^2.3.0"
+  },
+  "engines": {
+    "node": "12.16.x",
+    "npm": "6.13.x"
   }
 }
